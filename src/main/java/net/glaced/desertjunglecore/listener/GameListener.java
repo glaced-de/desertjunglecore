@@ -1,0 +1,83 @@
+package net.glaced.desertjunglecore.listener;
+
+import io.papermc.paper.event.player.AsyncChatEvent;
+import net.glaced.desertjunglecore.api.EventTeam;
+import net.glaced.desertjunglecore.event.EventService;
+import net.glaced.desertjunglecore.service.TeamService;
+import net.glaced.desertjunglecore.ui.HudService;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.plugin.java.JavaPlugin;
+
+/** Gameplay listeners with no blocking I/O on region threads. */
+public final class GameListener implements Listener {
+    private final JavaPlugin plugin;
+    private final TeamService teams;
+    private final HudService hud;
+
+    public GameListener(JavaPlugin plugin, TeamService teams, EventService ignoredEvent, HudService hud) {
+        this.plugin = plugin;
+        this.teams = teams;
+        this.hud = hud;
+    }
+
+    @EventHandler public void join(PlayerJoinEvent event) {
+        teams.load(event.getPlayer());
+        hud.initialize(event.getPlayer());
+    }
+
+    @EventHandler public void quit(PlayerQuitEvent event) { hud.remove(event.getPlayer()); }
+
+    @EventHandler(ignoreCancelled = true) public void damage(EntityDamageByEntityEvent event) {
+        if (!(event.getEntity() instanceof Player victim) || !(event.getDamager() instanceof Player attacker)) return;
+        EventTeam attackerTeam = teams.teamOf(attacker.getUniqueId());
+        EventTeam victimTeam = teams.teamOf(victim.getUniqueId());
+        if (attackerTeam != null && attackerTeam == victimTeam && !plugin.getConfig().getBoolean("teams.friendly-fire", false)) event.setCancelled(true);
+    }
+
+    @EventHandler public void death(PlayerDeathEvent event) {
+        Player victim = event.getPlayer();
+        teams.death(victim.getUniqueId());
+        if (victim.getKiller() != null) teams.kill(victim.getKiller().getUniqueId());
+        // Eliminate on death: no more team respawns for this life, they become a spectator.
+        teams.leave(victim);
+    }
+
+    @EventHandler public void respawn(PlayerRespawnEvent event) {
+        Player player = event.getPlayer();
+        EventTeam team = teams.teamOf(player.getUniqueId());
+        if (team != null) {
+            Location spawn = teams.respawnLocation(player);
+            if (spawn != null) event.setRespawnLocation(spawn);
+            return;
+        }
+
+        // No team left (just eliminated, or never joined one): send to world spawn
+        // and switch to spectator once the respawn has actually gone through.
+        event.setRespawnLocation(player.getWorld().getSpawnLocation());
+        player.getScheduler().run(plugin, ignored -> {
+            player.setGameMode(GameMode.SPECTATOR);
+            player.sendMessage(Component.text("You have been eliminated and are now spectating.", NamedTextColor.GRAY));
+        }, null);
+    }
+
+    @EventHandler public void chat(AsyncChatEvent event) {
+        EventTeam team = teams.teamOf(event.getPlayer().getUniqueId());
+        event.renderer((source, name, message, viewer) -> Component.text()
+                .append(team == null ? Component.empty() : Component.text(team.display() + " ", team.color()))
+                .append(name.color(NamedTextColor.WHITE))
+                .append(Component.text(" > ", NamedTextColor.DARK_GRAY))
+                .append(message)
+                .build());
+    }
+}

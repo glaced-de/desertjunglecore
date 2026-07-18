@@ -1,0 +1,32 @@
+name: DesertJungleCore
+version: '${version}'
+main: net.glaced.desertjunglecore.DesertJungleCorePlugin
+api-version: '26.1.2'
+load: POSTWORLD
+folia-supported: true
+description: Desert vs Jungle event core for Paper and ShreddedPaper.
+authors: [Glaced]
+softdepend: [PlaceholderAPI]
+libraries:
+  - org.xerial:sqlite-jdbc:3.51.1.0
+commands:
+  team:
+    description: Select or manage an event team.
+    usage: /team <desert|jungle|leave|set>
+  event:
+    description: Manage the event lifecycle.
+    usage: /event <start|stop|pause|resume>
+  group:
+    description: Manage local permission groups.
+    usage: /group <create|set|assign>
+permissions:
+  desertjungle.team:
+    default: op
+  desertjungle.team.admin:
+    default: op
+  desertjungle.team.spawn:
+    default: op
+  desertjungle.event.admin:
+    default: op
+  desertjungle.group.admin:
+    default: op
