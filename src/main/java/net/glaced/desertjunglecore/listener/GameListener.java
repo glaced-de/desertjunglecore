@@ -25,6 +25,7 @@ public final class GameListener implements Listener {
     private final TeamService teams;
     private final HudService hud;
 
+
     public GameListener(JavaPlugin plugin, TeamService teams, EventService ignoredEvent, HudService hud) {
         this.plugin = plugin;
         this.teams = teams;
@@ -34,9 +35,20 @@ public final class GameListener implements Listener {
     @EventHandler public void join(PlayerJoinEvent event) {
         teams.load(event.getPlayer());
         hud.initialize(event.getPlayer());
+
+        Player player = event.getPlayer();
+        String name = player.getName();
+        event.setJoinMessage("§a[+] " + name);
     }
 
-    @EventHandler public void quit(PlayerQuitEvent event) { hud.remove(event.getPlayer()); }
+    @EventHandler public void quit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+        String name = player.getName();
+        
+        hud.remove(event.getPlayer());
+
+        event.setQuitMessage("§c[+] " + name);
+    }
 
     @EventHandler(ignoreCancelled = true) public void damage(EntityDamageByEntityEvent event) {
         if (!(event.getEntity() instanceof Player victim) || !(event.getDamager() instanceof Player attacker)) return;
