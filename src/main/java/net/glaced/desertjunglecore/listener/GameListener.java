@@ -19,12 +19,18 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 /** Gameplay listeners with no blocking I/O on region threads. */
 public final class GameListener implements Listener {
     private final JavaPlugin plugin;
     private final TeamService teams;
     private final HudService hud;
 
+    // Merkt sich die Todesposition, damit beim Respawn nicht zum Weltspawn teleportiert wird.
+    private final Map<UUID, Location> deathLocations = new ConcurrentHashMap<>();
 
     public GameListener(JavaPlugin plugin, TeamService teams, EventService ignoredEvent, HudService hud) {
         this.plugin = plugin;
@@ -44,10 +50,11 @@ public final class GameListener implements Listener {
     @EventHandler public void quit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         String name = player.getName();
-        
-        hud.remove(event.getPlayer());
 
-        event.setQuitMessage("§c[+] " + name);
+        hud.remove(event.getPlayer());
+        deathLocations.remove(player.getUniqueId());
+
+        event.setQuitMessage("§c[-] " + name);
     }
 
     @EventHandler(ignoreCancelled = true) public void damage(EntityDamageByEntityEvent event) {
@@ -61,6 +68,10 @@ public final class GameListener implements Listener {
         Player victim = event.getPlayer();
         teams.death(victim.getUniqueId());
         if (victim.getKiller() != null) teams.kill(victim.getKiller().getUniqueId());
+
+        // Todesort merken, damit der Spieler dort als Spectator bleibt statt zum Spawn zu teleportieren.
+        deathLocations.put(victim.getUniqueId(), victim.getLocation().clone());
+
         // Eliminate on death: no more team respawns for this life, they become a spectator.
         teams.leave(victim);
     }
@@ -74,9 +85,13 @@ public final class GameListener implements Listener {
             return;
         }
 
-        // No team left (just eliminated, or never joined one): send to world spawn
-        // and switch to spectator once the respawn has actually gone through.
-        event.setRespawnLocation(player.getWorld().getSpawnLocation());
+        // Kein Team mehr (gerade eliminiert oder nie beigetreten): kein Teleport zum Weltspawn,
+        // stattdessen an der Todesposition bleiben und direkt Spectator werden.
+        Location deathLoc = deathLocations.remove(player.getUniqueId());
+        if (deathLoc != null) {
+            event.setRespawnLocation(deathLoc);
+        }
+
         player.getScheduler().run(plugin, ignored -> {
             player.setGameMode(GameMode.SPECTATOR);
             player.sendMessage(Component.text("You have been eliminated and are now spectating.", NamedTextColor.GRAY));
