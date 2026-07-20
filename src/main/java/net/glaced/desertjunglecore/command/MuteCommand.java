@@ -1,5 +1,6 @@
 package net.glaced.desertjunglecore.command;
 
+import net.glaced.desertjunglecore.service.MuteService;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -7,17 +8,16 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 public class MuteCommand implements CommandExecutor {
 
     private final JavaPlugin plugin;
-    private final Set<UUID> mutedPlayers = new HashSet<>();
+    private final MuteService muteService;
 
-    public MuteCommand(JavaPlugin plugin) {
+    public MuteCommand(JavaPlugin plugin, MuteService muteService) {
         this.plugin = plugin;
+        this.muteService = muteService;
     }
 
     @Override
@@ -43,8 +43,8 @@ public class MuteCommand implements CommandExecutor {
         UUID id = target.getUniqueId();
 
         // UNMUTE
-        if (mutedPlayers.contains(id)) {
-            mutedPlayers.remove(id);
+        if (muteService.isMuted(id)) {
+            muteService.unmute(id);
 
             admin.getScheduler().execute(
                     plugin,
@@ -58,7 +58,7 @@ public class MuteCommand implements CommandExecutor {
         }
 
         // MUTE
-        mutedPlayers.add(id);
+        muteService.mute(id);
 
         admin.getScheduler().execute(
                 plugin,
@@ -69,9 +69,5 @@ public class MuteCommand implements CommandExecutor {
 
         admin.sendMessage("§cYou muted §e" + target.getName());
         return true;
-    }
-
-    public boolean isMuted(Player player) {
-        return mutedPlayers.contains(player.getUniqueId());
     }
 }

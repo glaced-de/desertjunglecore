@@ -7,6 +7,7 @@ import net.glaced.desertjunglecore.event.EventService;
 import net.glaced.desertjunglecore.listener.GameListener;
 import net.glaced.desertjunglecore.service.GroupService;
 import net.glaced.desertjunglecore.service.IconService;
+import net.glaced.desertjunglecore.service.MuteService;
 import net.glaced.desertjunglecore.service.SpawnService;
 import net.glaced.desertjunglecore.service.TeamService;
 import net.glaced.desertjunglecore.ui.HudService;
@@ -21,6 +22,7 @@ public final class DesertJungleCorePlugin extends JavaPlugin {
     private GroupService groups;
     private EventService event;
     private HudService hud;
+    private MuteService muteService;
 
     @Override
     public void onEnable() {
@@ -30,25 +32,31 @@ public final class DesertJungleCorePlugin extends JavaPlugin {
 
         var config = new PluginConfiguration(this);
 
+        // SQLite
         repository = new SqliteRepository(this, config.databaseFile());
-        repository.initialize();
+        repository.initialize(); // players + muted_players
 
+        // Services
         spawns = new SpawnService(this);
         teams = new TeamService(this, repository, config, spawns);
         groups = new GroupService(this, repository);
         event = new EventService(this, teams, config);
         hud = new HudService(this, teams, event, groups, config);
+        muteService = new MuteService(repository);
 
+        // Load data
         teams.loadOnlinePlayers();
         groups.loadDefinitions();
         hud.start();
 
+        // HUD init for online players
         getServer().getOnlinePlayers().forEach(player ->
                 player.getScheduler().run(this, ignored -> hud.initialize(player), null)
         );
 
+        // Listener (jetzt mit MuteService!)
         getServer().getPluginManager().registerEvents(
-                new GameListener(this, teams, event, hud),
+                new GameListener(this, teams, event, hud, muteService),
                 this
         );
 
@@ -59,7 +67,7 @@ public final class DesertJungleCorePlugin extends JavaPlugin {
         register("speed", new SpeedCommand());
         register("vanish", new VanishCommand(this));
         register("gm", new GamemodeCommand(this));
-        register("mute", new MuteCommand(this));
+        register("mute", new MuteCommand(this, muteService));
 
         getLogger().info("DesertJungleCore enabled.");
     }
@@ -71,10 +79,13 @@ public final class DesertJungleCorePlugin extends JavaPlugin {
 
         command.setExecutor(executor);
 
-        // TabCompleter nur setzen, wenn vorhanden
         if (executor instanceof org.bukkit.command.TabCompleter completer) {
             command.setTabCompleter(completer);
         }
+    }
+
+    public MuteService getMuteService() {
+        return muteService;
     }
 
     @Override

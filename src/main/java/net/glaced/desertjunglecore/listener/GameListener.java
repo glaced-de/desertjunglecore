@@ -3,6 +3,7 @@ package net.glaced.desertjunglecore.listener;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.glaced.desertjunglecore.api.EventTeam;
 import net.glaced.desertjunglecore.event.EventService;
+import net.glaced.desertjunglecore.service.MuteService;
 import net.glaced.desertjunglecore.service.TeamService;
 import net.glaced.desertjunglecore.ui.HudService;
 import net.kyori.adventure.text.Component;
@@ -28,14 +29,17 @@ public final class GameListener implements Listener {
     private final JavaPlugin plugin;
     private final TeamService teams;
     private final HudService hud;
+    private final MuteService muteService;
+
 
     // Merkt sich die Todesposition, damit beim Respawn nicht zum Weltspawn teleportiert wird.
     private final Map<UUID, Location> deathLocations = new ConcurrentHashMap<>();
 
-    public GameListener(JavaPlugin plugin, TeamService teams, EventService ignoredEvent, HudService hud) {
+    public GameListener(JavaPlugin plugin, TeamService teams, EventService ignoredEvent, HudService hud, MuteService muteService) {
         this.plugin = plugin;
         this.teams = teams;
         this.hud = hud;
+        this.muteService = muteService;
     }
 
     @EventHandler public void join(PlayerJoinEvent event) {
@@ -106,5 +110,12 @@ public final class GameListener implements Listener {
                 .append(Component.text(" > ", NamedTextColor.DARK_GRAY))
                 .append(message)
                 .build());
+
+        UUID id = event.getPlayer().getUniqueId();
+
+        if (muteService.isMuted(id)) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage("§cYou are muted.");
+        }
     }
 }
