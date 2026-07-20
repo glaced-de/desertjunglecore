@@ -26,16 +26,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-/**
- * Low-packet HUD. Uses FastBoard (packet-based) instead of the Bukkit Scoreboard API,
- * since Folia's CraftScoreboardManager#getNewScoreboard() is unsupported and throws.
- *
- * <p>Only rebuilds and (re)sends HUD content when the underlying data actually changed,
- * so idle players cost effectively zero work between updates. All static text (title,
- * labels, dividers, badges) is precomputed once as constants. Every glyph used here is
- * from Minecraft's default font — no unsupported unicode (e.g. sword icons) that can
- * silently break formatting on a line.
- */
 public final class HudService {
 
     private static final TextColor DESERT = TextColor.color(0xF2C572);
@@ -86,8 +76,19 @@ public final class HudService {
     }
 
     public void start() {
-        actionBarTask = Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, ignored -> dispatch(this::updateActionBar), 1L, 20L);
-        sidebarTask = Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, ignored -> dispatch(this::updateSidebar), 1L, 40L);
+        actionBarTask = Bukkit.getGlobalRegionScheduler().runAtFixedRate(
+                plugin,
+                task -> dispatch(this::updateActionBar),
+                1L,
+                20L
+        );
+
+        sidebarTask = Bukkit.getGlobalRegionScheduler().runAtFixedRate(
+                plugin,
+                task -> dispatch(this::updateSidebar),
+                1L,
+                40L
+        );
     }
 
     public void stop() {
@@ -118,7 +119,11 @@ public final class HudService {
 
     private void dispatch(Consumer<Player> update) {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            player.getScheduler().run(plugin, ignored -> update.accept(player), null);
+            player.getScheduler().run(
+                    plugin,
+                    task -> update.accept(player),
+                    null
+            );
         }
     }
 
@@ -144,7 +149,7 @@ public final class HudService {
     private void updateSidebar(Player player) {
         UUID id = player.getUniqueId();
         FastBoard board = boards.get(id);
-        if (board == null) return; // Not initialized yet (join listener hasn't run) or already removed.
+        if (board == null) return;
 
         int online = Bukkit.getOnlinePlayers().size();
         int max = Bukkit.getMaxPlayers();
@@ -182,7 +187,6 @@ public final class HudService {
         board.updateLines(lines);
     }
 
-    /** Precomputed per-character RGB gradient for static text — built once, cached as a constant. */
     private static Component gradient(String text, TextColor from, TextColor to, boolean bold) {
         int length = text.length();
         TextComponent.Builder builder = Component.text();

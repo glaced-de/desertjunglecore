@@ -14,8 +14,12 @@ repositories {
 
 dependencies {
     implementation("fr.mrmicky:fastboard:2.2.0")
-    compileOnly("io.papermc.paper:paper-api:26.1.2.build.+")
+
+    // PlaceholderAPI
     compileOnly("me.clip:placeholderapi:2.11.6")
+
+    // Folia API als normale compileOnly-Dependency
+    compileOnly("dev.folia:folia-api:1.20.4-R0.1-SNAPSHOT")
 }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
@@ -33,6 +37,7 @@ tasks {
     build {
         dependsOn(shadowJar)
     }
+
     assemble {
         dependsOn(shadowJar)
     }

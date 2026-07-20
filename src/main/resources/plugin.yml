@@ -19,6 +19,14 @@ commands:
   group:
     description: Manage local permission groups.
     usage: /group <create|set|assign>
+  speed:
+    description: Set your flying speed
+    usage: /speed 1-50
+    permission: fly.use
+  vanish:
+    description: Sets you in vanish
+    usage: /vanish
+    permission: vanish.use
 permissions:
   desertjungle.team:
     default: op
@@ -29,4 +37,8 @@ permissions:
   desertjungle.event.admin:
     default: op
   desertjungle.group.admin:
+    default: op
+  fly.use:
+    default: op
+  vanish.use:
     default: op

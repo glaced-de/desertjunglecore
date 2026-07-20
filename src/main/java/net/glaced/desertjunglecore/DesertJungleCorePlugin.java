@@ -1,8 +1,6 @@
 package net.glaced.desertjunglecore;
 
-import net.glaced.desertjunglecore.command.EventCommand;
-import net.glaced.desertjunglecore.command.GroupCommand;
-import net.glaced.desertjunglecore.command.TeamCommand;
+import net.glaced.desertjunglecore.command.*;
 import net.glaced.desertjunglecore.config.PluginConfiguration;
 import net.glaced.desertjunglecore.data.SqliteRepository;
 import net.glaced.desertjunglecore.event.EventService;
@@ -37,7 +35,7 @@ public final class DesertJungleCorePlugin extends JavaPlugin {
         teams.loadOnlinePlayers(); groups.loadDefinitions(); hud.start();
         getServer().getOnlinePlayers().forEach(player -> player.getScheduler().run(this, ignored -> hud.initialize(player), null));
         getServer().getPluginManager().registerEvents(new GameListener(this, teams, event, hud), this);
-        register("team", new TeamCommand(teams, spawns)); register("event", new EventCommand(event)); register("group", new GroupCommand(groups));
+        register("team", new TeamCommand(teams, spawns)); register("event", new EventCommand(event)); register("group", new GroupCommand(groups)); register("speed", new SpeedCommand()); register("vanish", new VanishCommand(this));
         getLogger().info("DesertJungleCore enabled.");
     }
     private void register(String name, org.bukkit.command.CommandExecutor executor) {
