@@ -13,8 +13,8 @@ import net.glaced.desertjunglecore.ui.HudService;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
-/** Bootstrap and composition root for DesertJungleCore. */
 public final class DesertJungleCorePlugin extends JavaPlugin {
+
     private SqliteRepository repository;
     private TeamService teams;
     private SpawnService spawns;
@@ -22,26 +22,64 @@ public final class DesertJungleCorePlugin extends JavaPlugin {
     private EventService event;
     private HudService hud;
 
-    @Override public void onEnable() {
-        saveDefaultConfig(); saveResource("groups.yml", false);
+    @Override
+    public void onEnable() {
+
+        saveDefaultConfig();
+        saveResource("groups.yml", false);
+
         var config = new PluginConfiguration(this);
+
         repository = new SqliteRepository(this, config.databaseFile());
         repository.initialize();
+
         spawns = new SpawnService(this);
         teams = new TeamService(this, repository, config, spawns);
         groups = new GroupService(this, repository);
         event = new EventService(this, teams, config);
         hud = new HudService(this, teams, event, groups, config);
-        teams.loadOnlinePlayers(); groups.loadDefinitions(); hud.start();
-        getServer().getOnlinePlayers().forEach(player -> player.getScheduler().run(this, ignored -> hud.initialize(player), null));
-        getServer().getPluginManager().registerEvents(new GameListener(this, teams, event, hud), this);
-        register("team", new TeamCommand(teams, spawns)); register("event", new EventCommand(event)); register("group", new GroupCommand(groups)); register("speed", new SpeedCommand()); register("vanish", new VanishCommand(this));
+
+        teams.loadOnlinePlayers();
+        groups.loadDefinitions();
+        hud.start();
+
+        getServer().getOnlinePlayers().forEach(player ->
+                player.getScheduler().run(this, ignored -> hud.initialize(player), null)
+        );
+
+        getServer().getPluginManager().registerEvents(
+                new GameListener(this, teams, event, hud),
+                this
+        );
+
+        // Commands
+        register("team", new TeamCommand(teams, spawns));
+        register("event", new EventCommand(event));
+        register("group", new GroupCommand(groups));
+        register("speed", new SpeedCommand());
+        register("vanish", new VanishCommand(this));
+        register("gm", new GamemodeCommand(this));
+        register("mute", new MuteCommand(this));
+
         getLogger().info("DesertJungleCore enabled.");
     }
+
     private void register(String name, org.bukkit.command.CommandExecutor executor) {
         PluginCommand command = getCommand(name);
-        if (command == null) throw new IllegalStateException("Missing command in plugin.yml: " + name);
-        command.setExecutor(executor); command.setTabCompleter((org.bukkit.command.TabCompleter) executor);
+        if (command == null)
+            throw new IllegalStateException("Missing command in plugin.yml: " + name);
+
+        command.setExecutor(executor);
+
+        // TabCompleter nur setzen, wenn vorhanden
+        if (executor instanceof org.bukkit.command.TabCompleter completer) {
+            command.setTabCompleter(completer);
+        }
     }
-    @Override public void onDisable() { if (hud != null) hud.stop(); if (repository != null) repository.close(); }
+
+    @Override
+    public void onDisable() {
+        if (hud != null) hud.stop();
+        if (repository != null) repository.close();
+    }
 }

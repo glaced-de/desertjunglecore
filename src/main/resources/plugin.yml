@@ -27,6 +27,14 @@ commands:
     description: Sets you in vanish
     usage: /vanish
     permission: vanish.use
+  mute:
+    description: Mutes a player
+    usage: /mute
+    permission: mute.use
+  gm:
+    description: Change gamemode
+    usage: /gm 0-3
+    permission: gm.use
 permissions:
   desertjungle.team:
     default: op
@@ -41,4 +49,8 @@ permissions:
   fly.use:
     default: op
   vanish.use:
+    default: op
+  mute.use:
+    default: op
+  gm.use:
     default: op
