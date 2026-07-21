@@ -7,11 +7,11 @@ public final class GlacedEvent extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        getLogger().info("DesertJungleEvent Plugin by lowtime startet");
+        
     }
 
     @Override
     public void onDisable() {
-        getLogger().info("DesertJungleEvent Plugin by lowtime deaktiviert");
+
     }
 }
