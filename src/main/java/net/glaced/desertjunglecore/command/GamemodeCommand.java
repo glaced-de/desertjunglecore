@@ -1,5 +1,6 @@
 package net.glaced.desertjunglecore.command;
 
+import net.glaced.desertjunglecore.service.MessageService;
 import org.bukkit.GameMode;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -24,7 +25,7 @@ public class GamemodeCommand implements CommandExecutor {
         }
 
         if (args.length == 0) {
-            player.sendMessage("§cUsage: /gm <0|1|2|3>");
+            MessageService.send(player, "§cUsage: /gm <0-3>");
             return true;
         }
 
@@ -36,7 +37,7 @@ public class GamemodeCommand implements CommandExecutor {
             case "2", "a", "adventure" -> mode = GameMode.ADVENTURE;
             case "3", "sp", "spectator" -> mode = GameMode.SPECTATOR;
             default -> {
-                player.sendMessage("§cInvalid gamemode: " + args[0]);
+                player.sendActionBar("§cInvalid gamemode: " + args[0]);
                 return true;
             }
         }
@@ -51,8 +52,6 @@ public class GamemodeCommand implements CommandExecutor {
                 null,
                 0L
         );
-
-        player.sendMessage("§aGamemode changed to §e" + mode.name());
         return true;
     }
 }

@@ -7,7 +7,7 @@ public final class GlacedEvent extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        
+
     }
 
     @Override

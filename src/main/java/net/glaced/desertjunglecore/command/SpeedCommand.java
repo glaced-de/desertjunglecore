@@ -1,12 +1,20 @@
 package net.glaced.desertjunglecore.command;
 
+import net.glaced.desertjunglecore.service.MessageService;
+import net.glaced.desertjunglecore.service.MuteService;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class SpeedCommand implements CommandExecutor {
+    private final JavaPlugin plugin;
+
+    public SpeedCommand(JavaPlugin plugin) {
+        this.plugin = plugin;
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -17,7 +25,7 @@ public class SpeedCommand implements CommandExecutor {
         }
 
         if (args.length != 1) {
-            player.sendMessage("§cUsage: /speed <1-50>");
+            MessageService.send( player, "§cError usage: /speed <1-50>");
             return true;
         }
 
@@ -25,24 +33,23 @@ public class SpeedCommand implements CommandExecutor {
         try {
             value = Integer.parseInt(args[0]);
         } catch (NumberFormatException e) {
-            player.sendMessage("§cPlease enter a number between 1 and 50.");
+            MessageService.send( player, "§cError usage: /speed <1-50>");
             return true;
         }
 
         if (value < 1 || value > 50) {
-            player.sendMessage("§cSpeed must be between 1 and 50.");
+            MessageService.send( player, "§cError usage: /speed <1-50>");
             return true;
         }
 
         if (player.getGameMode() != GameMode.CREATIVE && player.getGameMode() != GameMode.SPECTATOR) {
-            player.sendMessage("§cYou must be in creative or spectator mode to change fly speed.");
+            MessageService.send( player, "§cError you must be in creative or spectator mode to apply speed");
             return true;
         }
 
         float flySpeed = value / 50f;
         player.setFlySpeed(flySpeed);
-
-        player.sendMessage("§aFly speed set to §e" + value + "§a.");
+        player.sendActionBar("§aFly speed set to " + value + "!");
         return true;
     }
 }

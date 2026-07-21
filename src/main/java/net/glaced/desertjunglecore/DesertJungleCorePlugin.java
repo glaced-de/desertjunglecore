@@ -64,7 +64,7 @@ public final class DesertJungleCorePlugin extends JavaPlugin {
         register("team", new TeamCommand(teams, spawns));
         register("event", new EventCommand(event));
         register("group", new GroupCommand(groups));
-        register("speed", new SpeedCommand());
+        register("speed", new SpeedCommand(this));
         register("vanish", new VanishCommand(this));
         register("gm", new GamemodeCommand(this));
         register("mute", new MuteCommand(this, muteService));

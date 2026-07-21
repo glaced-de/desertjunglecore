@@ -1,5 +1,6 @@
 package net.glaced.desertjunglecore.command;
 
+import net.glaced.desertjunglecore.service.MessageService;
 import net.glaced.desertjunglecore.service.MuteService;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -29,14 +30,14 @@ public class MuteCommand implements CommandExecutor {
         }
 
         if (args.length == 0) {
-            admin.sendMessage("§cUsage: /mute <player>");
+            MessageService.send(admin, "§cUsage /mute <player>");
             return true;
         }
 
         Player target = Bukkit.getPlayer(args[0]);
 
         if (target == null) {
-            admin.sendMessage("§cPlayer not found.");
+            MessageService.send(admin, "§cPlayer: " + target.getName() + " not found");
             return true;
         }
 
@@ -52,8 +53,6 @@ public class MuteCommand implements CommandExecutor {
                     null,
                     0L
             );
-
-            admin.sendMessage("§aYou unmuted §e" + target.getName());
             return true;
         }
 
@@ -66,8 +65,6 @@ public class MuteCommand implements CommandExecutor {
                 null,
                 0L
         );
-
-        admin.sendMessage("§cYou muted §e" + target.getName());
         return true;
     }
 }
